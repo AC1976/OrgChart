@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to Chart Tree</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script> <!-- Include D3.js library -->
+    <style>
+        /* Define CSS styles for the chart */
+        .node circle {
+            fill: #fff;
+            stroke: steelblue;
+            stroke-width: 3px;
+        }
+        .node text { font: 12px sans-serif; }
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Create a div where the chart will be rendered -->
+    <div id="chart"></div>
+
+    <script>
+        // Read the CSV file and render the chart
+        d3.csv("tree.csv").then(function(data) {
+            // Convert the data into hierarchical structure
+            const root = d3.stratify()
+                .id(function(d) { return d.CHILD_ID; })
+                .parentId(function(d) { return d.PARENT_ID; })
+                (data);
+
+            // Set dimensions and margins for the chart
+            const width = 600;
+            const height = 400;
+            const margin = {top: 20, right: 90, bottom: 30, left: 90};
+
+            // Create a tree layout and specify size
+            const tree = d3.tree().size([height, width]);
+
+            // Append an SVG element to the chart div
+            const svg = d3.select("#chart").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            // Compute the layout
+            const nodes = tree(root);
+
+            // Add links between nodes
+            svg.selectAll(".link")
+                .data(nodes.descendants().slice(1))
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("d", function(d) {
+                    return "M" + d.y + "," + d.x
+                        + "C" + (d.y + d.parent.y) / 2 + "," + d.x
+                        + " " + (d.y + d.parent.y) / 2 + "," + d.parent.x
+                        + " " + d.parent.y + "," + d.parent.x;
+                });
+
+            // Add nodes as circles
+            const node = svg.selectAll(".node")
+                .data(nodes.descendants())
+                .enter().append("g")
+                .attr("class", "node")
+                .attr("transform", function(d) {
+                    return "translate(" + d.y + "," + d.x + ")";
+                });
+
+            node.append("circle")
+                .attr("r", 5);
+
+            // Add labels to the nodes
+            node.append("text")
+                .attr("dy", ".35em")
+                .attr("x", function(d) { return d.children ? -13 : 13; })
+                .style("text-anchor", function(d) { return d.children ? "end" : "start"; })
+                .text(function(d) { return d.id; });
+        });
+    </script>
+</body>
+</html>

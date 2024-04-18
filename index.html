@@ -28,9 +28,11 @@
         // Read the CSV file and render the chart
         d3.csv("tree.csv").then(function(data) {
             // Convert the data into hierarchical structure
+            console.log({data});
+            
             const root = d3.stratify()
                 .id(function(d) { return d.CHILD_ID; })
-                .parentId(function(d) { return d.PARENT_ID; })
+                .parentId(function(d) { return d.OWNER_ID; })
                 (data);
 
             // Set dimensions and margins for the chart
